@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# 
+#
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
@@ -19,7 +19,6 @@ def deleteMatches():
 
     conn.commit()
     conn.close()
-
 
 
 def deletePlayers():
@@ -47,10 +46,10 @@ def countPlayers():
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
-  
+
     The database assigns a unique serial id number for the player.  (This
     should be handled by your SQL database schema, not in your Python code.)
-  
+
     Args:
       name: the player's full name (need not be unique).
     """
@@ -59,7 +58,7 @@ def registerPlayer(name):
     c = conn.cursor()
 
     # insert this player into the player table
-    c.execute("INSERT INTO player (name) VALUES (%s);", (name,) )
+    c.execute("INSERT INTO player (name) VALUES (%s);", (name,))
     conn.commit()
     conn.close()
 
@@ -84,20 +83,20 @@ def playerStandings():
     # I get the standings by a rather single long sql query, here is the steps:
     # 1. from the match table, count the players' winning mathces, call it a winTable, similarly get a loseTable
     # 2. full join the winTable and loseTable, order by winning coounts and call it matchStat
-    # 3. right join the matchStat with player table, and get the standings table
-    long_sql = ("SELECT player.pid, player.name, COALESCE(matchStat.wins, 0) as wins, COALESCE(matchStat.wins + matchStat.losts, 0) as matches from " 
-                " (SELECT COALESCE(winTable.pid,loseTable.pid) as pid, COALESCE(winTable.wins,0) as wins, COALESCE(loseTable.losts,0) as losts FROM "
-                " (SELECT winner as pid, COUNT(winner) as wins from match GROUP BY winner) AS winTable FULL JOIN "
-                " (SELECT loser as pid, COUNT(loser) as losts from match GROUP BY loser) AS loseTable ON winTable.pid = loseTable.pid ORDER BY winTable.wins DESC)"
-                " AS matchStat RIGHT JOIN player On matchStat.pid = player.pid;"
-               )
+    # 3. right join the matchStat with player table, and get the standings
+    # table
+    long_sql = (
+        "SELECT player.pid, player.name, COALESCE(matchStat.wins, 0) as wins, COALESCE(matchStat.wins + matchStat.losts, 0) as matches from "
+        " (SELECT COALESCE(winTable.pid,loseTable.pid) as pid, COALESCE(winTable.wins,0) as wins, COALESCE(loseTable.losts,0) as losts FROM "
+        " (SELECT winner as pid, COUNT(winner) as wins from match GROUP BY winner) AS winTable FULL JOIN "
+        " (SELECT loser as pid, COUNT(loser) as losts from match GROUP BY loser) AS loseTable ON winTable.pid = loseTable.pid ORDER BY winTable.wins DESC)"
+        " AS matchStat RIGHT JOIN player On matchStat.pid = player.pid;")
     c.execute(long_sql)
 
     conn.commit()
     result = c.fetchall()
     conn.close()
     return result
-
 
 
 def reportMatch(winner, loser):
@@ -115,16 +114,16 @@ def reportMatch(winner, loser):
 
     conn.commit()
     conn.close()
- 
- 
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
-  
+
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
-  
+
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
         id1: the first player's unique id
@@ -146,4 +145,3 @@ def swissPairings():
         result.append((id1, name1, id2, name2))
 
     return result
-
